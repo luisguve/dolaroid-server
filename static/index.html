@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>homepage</title>
+</head>
+<body>
+	<h3>Login</h3>
+	<form id="login-form">
+		<label>
+			Username:
+			<input type="text" name="username">
+		</label>
+		<label>
+			Password:
+			<input type="password" name="password">
+		</label>
+		<button type="submit">Send</button>
+	</form>
+	<h3>Register</h3>
+	<form id="register-form">
+		<label>
+			Username:
+			<input type="text" name="username">
+		</label>
+		<label>
+			Password:
+			<input type="password" name="password">
+		</label>
+		<button type="submit">Send</button>
+	</form>
+</body>
+<script type="text/javascript">
+	let login = document.querySelector("#login-form");
+	login.onsubmit = e => {
+		e.preventDefault();
+		const loginForm = new FormData(login);
+		const data = {
+			username: loginForm.get("username"),
+			password: loginForm.get("password")
+		};
+		fetch("/login", {
+			method: "POST",
+			headers: {"Content-type": "application/json; charset=UTF-8"},
+			body: JSON.stringify(data)
+		}).then((res) => {
+			if (res.status != 200) {
+				console.log(res);
+			} else {
+				document.location.reload();
+			}
+		}).catch(err => {
+			console.log("Request failed:", err);
+		});
+	};
+	let register = document.querySelector("#register-form");
+	register.onsubmit = e => {
+		e.preventDefault();
+		const signupForm = new FormData(register);
+		const data = {
+			username: signupForm.get("username"),
+			password: signupForm.get("password")
+		};
+		fetch("/signup", {
+			method: "POST",
+			headers: {"Content-type": "application/json; charset=UTF-8"},
+			body: JSON.stringify(data)
+		}).then(() => {
+			document.location.reload();
+		}).catch(err => {
+			console.log("Request failed:", err);
+		});
+	};
+</script>
+</html>
