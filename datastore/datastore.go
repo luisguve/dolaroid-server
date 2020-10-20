@@ -60,30 +60,32 @@ const (
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Type     string `json:"type"` // type of account - admin, regular or business.
+	Type     string // type of account - admin, regular or business.
+	Id       string
 }
 
 func (d *Datastore) CreateUser(user User) (string, error) {
-	var id []byte
+	var id string
 	err := d.usersDB.Update(func(tx *bolt.Tx) error {
 		usernames := tx.Bucket([]byte(usernameToIdMappingsB))
 		userExists := usernames.Get([]byte(user.Username))
 		if userExists != nil {
 			return ErrUsernameAlreadyTaken
 		}
-		id = uuid.NewV4().Bytes()
-		err := usernames.Put([]byte(user.Username), id)
+		id = uuid.NewV4().String()
+		err := usernames.Put([]byte(user.Username), []byte(id))
 		if err != nil {
 			return err
 		}
+		user.Id = id
 		buf, err := json.Marshal(user)
 		if err != nil {
 			return err
 		}
 		usersData := tx.Bucket([]byte(usersDataB))
-		return usersData.Put(id, buf)
+		return usersData.Put([]byte(id), buf)
 	})
-	return string(id), err
+	return id, err
 }
 
 // Get a user.
