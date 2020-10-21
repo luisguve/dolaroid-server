@@ -55,6 +55,9 @@ func main() {
 	app.Post("/signup", r.handleSignup)
 	app.Post("/logout", r.handleLogout)
 
+	app.Get("/review", r.handleGetReview)
+	app.Post("/review", r.handlePostReview)
+
 	// Last middleware to match anything
 	app.Use(func(c *fiber.Ctx) error {
 		return c.SendStatus(404) // => 404 "Not Found"
