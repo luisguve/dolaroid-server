@@ -235,7 +235,9 @@ func (r routes) handlePostReview(c *fiber.Ctx) error {
 		c.SendString("Something went wrong")
 		return c.SendStatus(http.StatusInternalServerError)
 	}
+	// Set type of account from session data.
 	review.TypeOfAccount = session.Type
+	// Remove whitespaces from serial number.
 	review.BillInfo.SerialNumber = strings.Replace(review.BillInfo.SerialNumber, " ", "", -1)
 
 	if err := r.ds.CreateReview(review); err != nil {
