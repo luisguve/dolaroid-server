@@ -7,5 +7,5 @@ import (
 )
 
 func New() (*bolt.DB, error) {
-	return bolt.Open("sess.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
+	return bolt.Open("data/sess.db", 0600, &bolt.Options{Timeout: 1 * time.Second})
 }
