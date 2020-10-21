@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"encoding/gob"
+	"strings"
 
 	"github.com/luisguve/scs/v2"
 	"github.com/gofiber/fiber/v2"
@@ -163,6 +164,10 @@ func (r routes) handleGetReview(c *fiber.Ctx) error {
 		c.SendString("Something went wrong")
 		return c.SendStatus(http.StatusInternalServerError)
 	}
+	// Store serial number in variable.
+	originalSerial := billInfo.SerialNumber
+	// Remove whitespaces from serial number.
+	billInfo.SerialNumber = strings.Replace(billInfo.SerialNumber, " ", "", -1)
 	reviews, err := r.ds.QueryReviews(billInfo)
 	if err != nil {
 		if !errors.Is(err, datastore.ErrNoReviews) {
@@ -175,6 +180,7 @@ func (r routes) handleGetReview(c *fiber.Ctx) error {
 	bad := len(reviews.UserReviews.BadReviews) + len(reviews.BusinessReviews.BadReviews)
 	// Isn't the user logged in?
 	if !(r.sess.Exists(c.Context(), sessKey)) {
+		billInfo.SerialNumber = originalSerial
 		return c.JSON(basicReview{
 			BillInfo:    billInfo,
 			GoodReviews: good,
@@ -196,6 +202,8 @@ func (r routes) handleGetReview(c *fiber.Ctx) error {
 			return c.SendStatus(http.StatusInternalServerError)
 		}
 	}
+	// Assign back the serial number with spaces.
+	billInfo.SerialNumber = originalSerial
 	return c.JSON(fullReview{
 		BillInfo:        billInfo,
 		UserReviews:     reviews.UserReviews,
@@ -228,6 +236,7 @@ func (r routes) handlePostReview(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusInternalServerError)
 	}
 	review.TypeOfAccount = session.Type
+	review.BillInfo.SerialNumber = strings.Replace(review.BillInfo.SerialNumber, " ", "", -1)
 
 	if err := r.ds.CreateReview(review); err != nil {
 		log.Println(err)
