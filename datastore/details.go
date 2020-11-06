@@ -32,7 +32,7 @@ type DetailsPair struct {
 }
 
 type PostDetails struct {
-	Details `json:"details"`
+	Details `json:"detailsData"`
 	// either incoming or outcoming
 	TypeOfDetail string `json:"typeOfDetail"`
 }
@@ -55,7 +55,7 @@ func setupDetailsDB() (*bolt.DB, error) {
 
 func (d *Datastore) CreateDetails(userId string, billInfo BillInfo, pd PostDetails) error {
 	id := fmt.Sprintf("%s-%s-%s-%s", userId, billInfo.SerialNumber, billInfo.Value, 
-		billInfo.Year)
+		billInfo.Series)
 	return d.detailsDB.Update(func(tx *bolt.Tx) error {
 		details := tx.Bucket([]byte(detailsDataB))
 		billDetails := []DetailsPair{}
@@ -94,7 +94,7 @@ func (d *Datastore) CreateDetails(userId string, billInfo BillInfo, pd PostDetai
 // Get details
 func (d *Datastore) QueryDetails(userId string, billInfo BillInfo) ([]DetailsPair, error) {
 	id := fmt.Sprintf("%s-%s-%s-%s", userId, billInfo.SerialNumber, billInfo.Value, 
-		billInfo.Year)
+		billInfo.Series)
 	var billDetails []DetailsPair
 	err := d.detailsDB.View(func(tx *bolt.Tx) error {
 		details := tx.Bucket([]byte(detailsDataB))
