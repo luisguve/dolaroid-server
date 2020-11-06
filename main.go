@@ -54,6 +54,7 @@ func main() {
 	app.Post("/login", r.handleLogin)
 	app.Post("/signup", r.handleSignup)
 	app.Post("/logout", r.handleLogout)
+	app.Post("/location", r.handleLocation)
 
 	app.Get("/review", r.handleGetReview)
 	app.Post("/review", r.handlePostReview)
