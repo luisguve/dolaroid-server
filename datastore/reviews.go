@@ -19,9 +19,9 @@ var (
 )
 
 type BillInfo struct {
-	SerialNumber string `query:"sn"    json:"serialNumber"`
-	Value string        `query:"value" json:"value"`
-	Year string         `query:"year"  json:"year"`
+	SerialNumber string `query:"sn"     json:"serialNumber"`
+	Value        string `query:"value"  json:"value"`
+	Series       string `query:"series" json:"series"`
 }
 
 type Review struct {
@@ -29,7 +29,7 @@ type Review struct {
 	Location string `json:"location"`
 	Date string `json:"date"`
 	Comment string `json:"comment"`
-	Defects map[string]string `json:"defects"` // in case of a bad review.
+	Defects []string `json:"defects"` // in case of a bad review.
 	Rating int `json:"rating"` // in case of a good review.
 }
 
@@ -52,7 +52,7 @@ type GetReviews struct {
 	BillInfo `json:"billInfo"`
 	UserReviews Reviews `json:"userReviews"`
 	BusinessReviews Reviews `json:"businessReviews"`
-	Defects map[string]string `json:"defects"`
+	Defects []string `json:"defects"`
 	Ratings int `json:"ratings"`
 	AvgRating int `json:"avgRating"`
 }
@@ -75,7 +75,7 @@ func setupReviewsDB() (*bolt.DB, error) {
 
 func (d *Datastore) CreateReview(review PostReview) error {
 	id := fmt.Sprintf("%s-%s-%s", review.BillInfo.SerialNumber, review.BillInfo.Value,
-		review.BillInfo.Year)
+		review.BillInfo.Series)
 	return d.reviewsDB.Update(func(tx *bolt.Tx) error {
 		reviews := tx.Bucket([]byte(reviewsDataB))
 		bill := GetReviews{}
@@ -100,10 +100,17 @@ func (d *Datastore) CreateReview(review PostReview) error {
 			} else {
 				badReviews := append(bill.UserReviews.BadReviews, review.Review)
 				bill.UserReviews.BadReviews = badReviews
-				// Update defects
-				for defect, desc := range review.Review.Defects {
-					if _, ok := bill.Defects[defect]; !ok {
-						bill.Defects[defect] = desc
+				// Update defects; if the defect's not there, append it.
+				for _, label1 := range review.Review.Defects {
+					found := false
+					for _, label2 := range bill.Defects {
+						if label1 == label2 {
+							found = true
+							break
+						}
+					}
+					if !found {
+						bill.Defects = append(bill.Defects, label1)
 					}
 				}
 			}
@@ -120,10 +127,17 @@ func (d *Datastore) CreateReview(review PostReview) error {
 			} else {
 				badReviews := append(bill.BusinessReviews.BadReviews, review.Review)
 				bill.BusinessReviews.BadReviews = badReviews
-				// Update defects
-				for defect, desc := range review.Review.Defects {
-					if _, ok := bill.Defects[defect]; !ok {
-						bill.Defects[defect] = desc
+				// Update defects; if the defect's not there, append it.
+				for _, label1 := range review.Review.Defects {
+					found := false
+					for _, label2 := range bill.Defects {
+						if label1 == label2 {
+							found = true
+							break
+						}
+					}
+					if !found {
+						bill.Defects = append(bill.Defects, label1)
 					}
 				}
 			}
@@ -138,7 +152,7 @@ func (d *Datastore) CreateReview(review PostReview) error {
 
 // Get review.
 func (d *Datastore) QueryReviews(billInfo BillInfo) (GetReviews, error) {
-	id := fmt.Sprintf("%s-%s-%s", billInfo.SerialNumber, billInfo.Value, billInfo.Year)
+	id := fmt.Sprintf("%s-%s-%s", billInfo.SerialNumber, billInfo.Value, billInfo.Series)
 	bill := GetReviews{}
 	err := d.reviewsDB.View(func(tx *bolt.Tx) error {
 		reviews := tx.Bucket([]byte(reviewsDataB))
