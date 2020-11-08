@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"encoding/gob"
 	"errors"
 	"log"
@@ -11,7 +10,6 @@ import (
 	"github.com/luisguve/scs/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/luisguve/dolaroid-server/datastore"
-	"github.com/luisguve/dolaroid-server/geocode"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,7 +32,7 @@ type initMsg struct {
 
 func init() {
 	gob.Register(datastore.User{})
-	gob.Register(coords{})
+	gob.Register(datastore.Coords{})
 }
 
 // Check whether the user is logged in and return its data: username, user id and
@@ -167,16 +165,8 @@ func (r routes) handleLogout(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusOK)
 }
 
-type coords struct {
-	Latitude string `json:"latt"`
-	Longitude string `json:"longt"`
-	City string `json:"city"`
-	Region string `json:"region"`
-	Country string `json:"country"`
-}
-
 func (r routes) handleLocation(c *fiber.Ctx) error {
-	location := coords{}
+	location := datastore.Coords{}
 	if err := c.BodyParser(&location); err != nil {
 		log.Println(err)
 		c.SendString("Something went wrong")
@@ -185,20 +175,6 @@ func (r routes) handleLocation(c *fiber.Ctx) error {
 	if (location.Latitude == "") || (location.Longitude == "") {
 		log.Println("Received empty location")
 		return c.SendStatus(http.StatusBadRequest)
-	}
-	query := fmt.Sprintf("%s,%s", location.Latitude, location.Longitude)
-	// Get info about the city.
-	if err := geocode.Locate(query, &location); err != nil {
-		log.Println(err)
-		c.SendString("Something went wrong")
-		return c.SendStatus(http.StatusInternalServerError)
-	}
-	query = fmt.Sprintf("%s,%s,%s", location.City, location.Region, location.Country)
-	// Get coords of the city
-	if err := geocode.Locate(query, &location); err != nil {
-		log.Println(err)
-		c.SendString("Something went wrong")
-		return c.SendStatus(http.StatusInternalServerError)
 	}
 
 	r.sess.Put(c.Context(), locationKey, location)
@@ -222,6 +198,7 @@ type basicReview struct {
 	BillInfo datastore.BillInfo `json:"billInfo"`
 	GoodReviews int `json:"goodReviews"`
 	BadReviews  int `json:"badReviews"`
+	AvgRating   int `json:"avgRating"`
 }
 
 func (r routes) handleGetReview(c *fiber.Ctx) error {
@@ -252,6 +229,7 @@ func (r routes) handleGetReview(c *fiber.Ctx) error {
 			BillInfo:    billInfo,
 			GoodReviews: good,
 			BadReviews:  bad,
+			AvgRating:   reviews.AvgRating,
 		})
 	}
 	sessVal := r.sess.Get(c.Context(), sessKey)
@@ -302,7 +280,7 @@ func (r routes) handlePostReview(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusInternalServerError)
 	}
 	locationVal := r.sess.Get(c.Context(), locationKey)
-	location, ok := locationVal.(string)
+	location, ok := locationVal.(datastore.Coords)
 	if !ok {
 		log.Printf("Failed type assertion to string from %#v.\n", locationVal)
 		c.SendString("Something went wrong")
@@ -325,6 +303,10 @@ func (r routes) handlePostReview(c *fiber.Ctx) error {
 	review.BillInfo.SerialNumber = strings.Replace(review.BillInfo.SerialNumber, " ", "", -1)
 
 	if err := r.ds.CreateReview(review); err != nil {
+		if errors.Is(err, datastore.ErrReviewExists) {
+			// This user already posted a review of this type.
+			return c.SendStatus(http.StatusConflict)
+		}
 		log.Println(err)
 		c.SendString("Something went wrong")
 		return c.SendStatus(http.StatusInternalServerError)
