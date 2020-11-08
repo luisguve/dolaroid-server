@@ -16,6 +16,7 @@ const (
 
 var (
 	ErrNoReviews = fmt.Errorf("There are no reviews")
+	ErrReviewExists = fmt.Errorf("This user already posted a review of this type")
 )
 
 type BillInfo struct {
@@ -24,9 +25,17 @@ type BillInfo struct {
 	Series       string `query:"series" json:"series"`
 }
 
+type Coords struct {
+	Latitude string `json:"latt"`
+	Longitude string `json:"longt"`
+	City string `json:"city"`
+	Region string `json:"region"`
+	Country string `json:"country"`
+}
+
 type Review struct {
 	UserId string `json:"userId"`
-	Location string `json:"location"`
+	Location Coords `json:"location"`
 	Date string `json:"date"`
 	Comment string `json:"comment"`
 	Defects []string `json:"defects"` // in case of a bad review.
@@ -89,15 +98,29 @@ func (d *Datastore) CreateReview(review PostReview) error {
 		}
 		if review.TypeOfAccount == TypeRegular {
 			if review.TypeOfReview == GoodReview {
-				goodReviews := append(bill.UserReviews.GoodReviews, review.Review)
-				bill.UserReviews.GoodReviews = goodReviews
+				// Allow only 1 review per user
+				for _, rv := range bill.UserReviews.GoodReviews {
+					if review.UserId == rv.UserId {
+						return ErrReviewExists
+					}
+				}
 				// Update ratings and avg rating
 				totalReviews := len(bill.UserReviews.GoodReviews)
 				totalReviews += len(bill.BusinessReviews.GoodReviews)
 				totalReviews++ // Add this review.
 				bill.Ratings += review.Review.Rating
 				bill.AvgRating = bill.Ratings / totalReviews
+				// Append review to this bill
+				goodReviews := append(bill.UserReviews.GoodReviews, review.Review)
+				bill.UserReviews.GoodReviews = goodReviews
 			} else {
+				// Allow only 1 review per user
+				for _, rv := range bill.UserReviews.BadReviews {
+					if review.UserId == rv.UserId {
+						return ErrReviewExists
+					}
+				}
+
 				badReviews := append(bill.UserReviews.BadReviews, review.Review)
 				bill.UserReviews.BadReviews = badReviews
 				// Update defects; if the defect's not there, append it.
@@ -116,15 +139,29 @@ func (d *Datastore) CreateReview(review PostReview) error {
 			}
 		} else {
 			if review.TypeOfReview == GoodReview {
-				goodReviews := append(bill.BusinessReviews.GoodReviews, review.Review)
-				bill.BusinessReviews.GoodReviews = goodReviews
+				// Allow only 1 review per user
+				for _, rv := range bill.BusinessReviews.GoodReviews {
+					if review.UserId == rv.UserId {
+						return ErrReviewExists
+					}
+				}
 				// Update ratings and avg rating
 				totalReviews := len(bill.UserReviews.GoodReviews)
 				totalReviews += len(bill.BusinessReviews.GoodReviews)
 				totalReviews++ // Add this review.
 				bill.Ratings += review.Review.Rating
 				bill.AvgRating = bill.Ratings / totalReviews
+				// Append this review to this bill
+				goodReviews := append(bill.BusinessReviews.GoodReviews, review.Review)
+				bill.BusinessReviews.GoodReviews = goodReviews
 			} else {
+				// Allow only 1 review per user
+				for _, rv := range bill.BusinessReviews.BadReviews {
+					if review.UserId == rv.UserId {
+						return ErrReviewExists
+					}
+				}
+
 				badReviews := append(bill.BusinessReviews.BadReviews, review.Review)
 				bill.BusinessReviews.BadReviews = badReviews
 				// Update defects; if the defect's not there, append it.
