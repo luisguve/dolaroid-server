@@ -20,6 +20,7 @@ const (
 var (
 	ErrUsernameAlreadyTaken = fmt.Errorf("Username already taken")
 	ErrUsernameNotExists = fmt.Errorf("Username not found")
+	ErrUnknownTypeOfAccount = fmt.Errorf("Invalid type of account")
 )
 
 type User struct {

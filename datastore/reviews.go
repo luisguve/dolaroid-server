@@ -3,6 +3,7 @@ package datastore
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	bolt "go.etcd.io/bbolt"
@@ -17,6 +18,7 @@ const (
 var (
 	ErrNoReviews = fmt.Errorf("There are no reviews")
 	ErrReviewExists = fmt.Errorf("This user already posted a review of this type")
+	ErrUnknownTypeOfReview = fmt.Errorf("Invalid type of review")
 )
 
 type BillInfo struct {
@@ -96,8 +98,10 @@ func (d *Datastore) CreateReview(review PostReview) error {
 		} else {
 			bill.BillInfo = review.BillInfo
 		}
-		if review.TypeOfAccount == TypeRegular {
-			if review.TypeOfReview == GoodReview {
+		switch review.TypeOfAccount {
+		case TypeRegular, TypeAdmin:
+			switch review.TypeOfReview {
+			case GoodReview:
 				// Allow only 1 review per user
 				for _, rv := range bill.UserReviews.GoodReviews {
 					if review.UserId == rv.UserId {
@@ -113,7 +117,7 @@ func (d *Datastore) CreateReview(review PostReview) error {
 				// Append review to this bill
 				goodReviews := append(bill.UserReviews.GoodReviews, review.Review)
 				bill.UserReviews.GoodReviews = goodReviews
-			} else {
+			case BadReview:
 				// Allow only 1 review per user
 				for _, rv := range bill.UserReviews.BadReviews {
 					if review.UserId == rv.UserId {
@@ -136,9 +140,13 @@ func (d *Datastore) CreateReview(review PostReview) error {
 						bill.Defects = append(bill.Defects, label1)
 					}
 				}
+			default:
+				log.Printf("%s: %s\n", ErrUnknownTypeOfReview, review.TypeOfReview)
+				return ErrUnknownTypeOfReview
 			}
-		} else {
-			if review.TypeOfReview == GoodReview {
+		case TypeBusiness:
+			switch review.TypeOfReview {
+			case GoodReview:
 				// Allow only 1 review per user
 				for _, rv := range bill.BusinessReviews.GoodReviews {
 					if review.UserId == rv.UserId {
@@ -154,7 +162,7 @@ func (d *Datastore) CreateReview(review PostReview) error {
 				// Append this review to this bill
 				goodReviews := append(bill.BusinessReviews.GoodReviews, review.Review)
 				bill.BusinessReviews.GoodReviews = goodReviews
-			} else {
+			case BadReview:
 				// Allow only 1 review per user
 				for _, rv := range bill.BusinessReviews.BadReviews {
 					if review.UserId == rv.UserId {
@@ -177,7 +185,13 @@ func (d *Datastore) CreateReview(review PostReview) error {
 						bill.Defects = append(bill.Defects, label1)
 					}
 				}
+			default:
+				log.Printf("%s: %s\n", ErrUnknownTypeOfReview, review.TypeOfReview)
+				return ErrUnknownTypeOfReview
 			}
+		default:
+			log.Printf("%s: %s\n", ErrUnknownTypeOfAccount, review.TypeOfAccount)
+			return ErrUnknownTypeOfAccount
 		}
 		billBytes, err := json.Marshal(bill)
 		if err != nil {
