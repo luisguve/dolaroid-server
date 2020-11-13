@@ -8,7 +8,6 @@ import (
 	"github.com/alexedwards/scs/boltstore"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/template/html"
 	"github.com/luisguve/dolaroid-server/datastore"
 	"github.com/luisguve/dolaroid-server/sessionstore"
 )
@@ -34,12 +33,7 @@ func main() {
 		sess: session,
 	}
 
-	// Initialize standard Go html template engine
-	engine := html.New("./static", ".html")
-
-	app := fiber.New(fiber.Config{
-		Views: engine,
-	})
+	app := fiber.New()
 
 	// Wrap handlers with session middleware.
 	app.Use("/", func(c *fiber.Ctx) error {
