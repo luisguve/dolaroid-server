@@ -64,6 +64,6 @@ func main() {
 		return c.SendStatus(404) // => 404 "Not Found"
 	})
 
-	// Start server on http://localhost:8000
-	app.Listen(":8000")
+	// Start server on http://localhost:80
+	app.Listen(":80")
 }
