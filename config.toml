@@ -1,0 +1,7 @@
+allow_origins = ["https://focused-lichterman-ca4176.netlify.app", "http://localhost:5000"]
+production = false
+domain = ""
+email = ""
+session_lifetime = 1900920 # in hours
+# email = "luisguveal@gmail.com"
+# domain = "3.139.103.81"
