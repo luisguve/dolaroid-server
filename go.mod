@@ -3,6 +3,8 @@ module github.com/luisguve/dolaroid-server
 go 1.14
 
 require (
+	github.com/BurntSushi/toml v0.3.1
+	github.com/alexedwards/scs v1.4.1 // indirect
 	github.com/alexedwards/scs/boltstore v0.0.0-20200729112010-8c9ddd400378
 	github.com/andybalholm/brotli v1.0.1 // indirect
 	github.com/gofiber/fiber/v2 v2.0.6
