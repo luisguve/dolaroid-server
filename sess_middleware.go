@@ -72,7 +72,7 @@ func (r routes) writeSessionCookie(c *fiber.Ctx, token string, expiry time.Time)
 
 func ssToString(ss http.SameSite) string {
 	switch ss {
-	case http.SameSiteLaxMode, SameSiteDefaultMode:
+	case http.SameSiteLaxMode, http.SameSiteDefaultMode:
 		return "Lax"
 	case http.SameSiteStrictMode:
 		return "Strict"
