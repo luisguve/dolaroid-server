@@ -106,9 +106,10 @@ func main() {
 			log.Fatal("listen 443:", err)
 		}
 		ln = tls.NewListener(ln, tlsConfig)
+		// Start server on port 443 on production host.
 		log.Fatal(app.Listener(ln))
 	}
 
-	// Start server on port 80, or port 443 if the environment is production.
+	// Start server on port 80 on localhost.
 	log.Fatal(app.Listen(":80"))
 }
