@@ -101,7 +101,10 @@ func main() {
 		}
 
 		tlsConfig := certManager.TLSConfig()
-		ln, _ := net.Listen("tcp", ":443")
+		ln, err := net.Listen("tcp", ":443")
+		if err != nil {
+			log.Fatal("listen 443:", err)
+		}
 		ln = tls.NewListener(ln, tlsConfig)
 		log.Fatal(app.Listener(ln))
 	}
