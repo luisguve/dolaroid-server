@@ -64,22 +64,6 @@ func main() {
 	}
 
 	app := fiber.New()
-	if config.Production {
-		if config.Domain == "" {
-			log.Fatal("Empty domain name in production")
-		}
-		certManager := autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(config.Domain),
-			Cache:      autocert.DirCache("certs"),
-			Email:      config.Email,
-		}
-
-		tlsConfig := certManager.TLSConfig()
-		ln, _ := net.Listen("tcp", ":443")
-		ln = tls.NewListener(ln, tlsConfig)
-		app.Listener(ln)
-	}
 
 	// Wrap handlers with session middleware.
 	app.Use("/", func(c *fiber.Ctx) error {
@@ -105,6 +89,23 @@ func main() {
 		return c.SendStatus(404) // => 404 "Not Found"
 	})
 
+	if config.Production {
+		if config.Domain == "" {
+			log.Fatal("Empty domain name in production")
+		}
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(config.Domain),
+			Cache:      autocert.DirCache("certs"),
+			Email:      config.Email,
+		}
+
+		tlsConfig := certManager.TLSConfig()
+		ln, _ := net.Listen("tcp", ":443")
+		ln = tls.NewListener(ln, tlsConfig)
+		log.Fatal(app.Listener(ln))
+	}
+
 	// Start server on port 80, or port 443 if the environment is production.
-	log.Fatal(app.Listen("80"))
+	log.Fatal(app.Listen(":80"))
 }
