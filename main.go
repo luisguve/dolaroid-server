@@ -89,6 +89,9 @@ func main() {
 	})
 
 	if config.Production {
+		session.Cookie.Secure = true
+		session.Cookie.SameSite = http.SameSiteNoneMode
+
 		if config.Domain == "" {
 			log.Fatal("Empty domain name in production")
 		}
