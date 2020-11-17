@@ -56,6 +56,7 @@ func (r routes) writeSessionCookie(c *fiber.Ctx, token string, expiry time.Time)
 		Domain:   r.sess.Cookie.Domain,
 		Secure:   r.sess.Cookie.Secure,
 		HTTPOnly: r.sess.Cookie.HttpOnly,
+		SameSite: ssToString(r.sess.Cookie.SameSite),
 	}
 
 	if expiry.IsZero() {
@@ -67,4 +68,18 @@ func (r routes) writeSessionCookie(c *fiber.Ctx, token string, expiry time.Time)
 	}
 
 	c.Cookie(cookie)
+}
+
+func ssToString(ss http.SameSite) string {
+	switch ss {
+	case http.SameSiteLaxMode, SameSiteDefaultMode:
+		return "Lax"
+	case http.SameSiteStrictMode:
+		return "Strict"
+	case http.SameSiteNoneMode:
+		return "None"
+	default:
+		log.Println("Unknown SameSite:", ss)
+	}
+	return "Lax"
 }
