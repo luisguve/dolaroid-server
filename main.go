@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
-	"net"
 	"time"
 	"strings"
 
@@ -93,19 +92,30 @@ func main() {
 		if config.Domain == "" {
 			log.Fatal("Empty domain name in production")
 		}
-		certManager := autocert.Manager{
+		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(config.Domain),
-			Cache:      autocert.DirCache("certs"),
+			Cache:      autocert.DirCache("./certs"),
 			Email:      config.Email,
 		}
 
-		tlsConfig := certManager.TLSConfig()
-		ln, err := net.Listen("tcp", ":443")
+		// TLS Config
+		tlsConfig := &tls.Config{
+			// Get Certificate from Let's Encrypt
+			GetCertificate: m.GetCertificate,
+			// By default NextProtos contains the "h2"
+			// This has to be removed since Fasthttp does not support HTTP/2
+			// Or it will cause a flood of PRI method logs
+			// http://webconcepts.info/concepts/http-method/PRI
+			NextProtos: []string{
+				"http/1.1", "acme-tls/1",
+			},
+		}
+
+		ln, err := tls.Listen("tcp", ":443", tlsConfig)
 		if err != nil {
 			log.Fatal("listen 443:", err)
 		}
-		ln = tls.NewListener(ln, tlsConfig)
 		// Start server on port 443 on production host.
 		log.Fatal(app.Listener(ln))
 	}
