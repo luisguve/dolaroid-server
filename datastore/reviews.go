@@ -65,7 +65,7 @@ type GetReviews struct {
 	BusinessReviews Reviews `json:"businessReviews"`
 	Defects []string `json:"defects"`
 	Ratings int `json:"ratings"`
-	AvgRating int `json:"avgRating"`
+	AvgRating float32 `json:"avgRating"`
 }
 
 // Open database and prepare buckets.
@@ -113,7 +113,7 @@ func (d *Datastore) CreateReview(review PostReview) error {
 				totalReviews += len(bill.BusinessReviews.GoodReviews)
 				totalReviews++ // Add this review.
 				bill.Ratings += review.Review.Rating
-				bill.AvgRating = bill.Ratings / totalReviews
+				bill.AvgRating = float32(bill.Ratings) / float32(totalReviews)
 				// Append review to this bill
 				goodReviews := append(bill.UserReviews.GoodReviews, review.Review)
 				bill.UserReviews.GoodReviews = goodReviews
@@ -158,7 +158,7 @@ func (d *Datastore) CreateReview(review PostReview) error {
 				totalReviews += len(bill.BusinessReviews.GoodReviews)
 				totalReviews++ // Add this review.
 				bill.Ratings += review.Review.Rating
-				bill.AvgRating = bill.Ratings / totalReviews
+				bill.AvgRating = float32(bill.Ratings) / float32(totalReviews)
 				// Append this review to this bill
 				goodReviews := append(bill.BusinessReviews.GoodReviews, review.Review)
 				bill.BusinessReviews.GoodReviews = goodReviews
