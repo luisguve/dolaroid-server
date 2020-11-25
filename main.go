@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 	"strings"
 
@@ -13,6 +15,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/luisguve/dolaroid-server/datastore"
 	"github.com/luisguve/dolaroid-server/sessionstore"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 type srvConfig struct {
@@ -85,6 +89,41 @@ func main() {
 		return c.SendStatus(404) // => 404 "Not Found"
 	})
 
+	if config.Production {
+		session.Cookie.Secure = true
+		session.Cookie.SameSite = http.SameSiteNoneMode
+
+		if config.Domain == "" {
+			log.Fatal("Empty domain name in production")
+		}
+		m := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(config.Domain),
+			Cache:      autocert.DirCache("./certs"),
+			Email:      config.Email,
+		}
+
+		// TLS Config
+		tlsConfig := &tls.Config{
+			// Get Certificate from Let's Encrypt
+			GetCertificate: m.GetCertificate,
+			// By default NextProtos contains the "h2"
+			// This has to be removed since Fasthttp does not support HTTP/2
+			// Or it will cause a flood of PRI method logs
+			// http://webconcepts.info/concepts/http-method/PRI
+			NextProtos: []string{
+				"http/1.1", "acme-tls/1",
+			},
+		}
+
+		ln, err := tls.Listen("tcp", ":443", tlsConfig)
+		if err != nil {
+			log.Fatal("listen 443:", err)
+		}
+		// Start server on port 443 on production host.
+		log.Fatal(app.Listener(ln))
+	}
+
 	// Start server on port 80 on localhost.
-	log.Fatal(app.Listen(":80"))
+	log.Fatal(app.Listen(":8000"))
 }
