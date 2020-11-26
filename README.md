@@ -24,9 +24,10 @@ credentials: include
 		"typeOfAccount": "regular/business/admin",
 		"userId": "user-id"
 	},
-	"sendLocation": true// or false
+	"sendLocation": true
 }
 ```
+`sendLocation` might be `false`.
 
 # Login "/login"
 Validate user credentials and return it's data: username, user id and type of account and wether the client should send its coords.
@@ -47,12 +48,13 @@ credentials: include
 	"isLoggedIn": true,
 	"session": {
 		"username": "username",
-		"typeOfAccount": "regular",// or business or admin
+		"typeOfAccount": "regular/business/admin",
 		"userId": "user id"
 	},
-	"sendLocation": true// or false
+	"sendLocation": true
 }
 ```
+`sendLocation` might be `false`.
 
 Error responses:
 - Username does not exist: "User unregistered"
@@ -84,9 +86,10 @@ Response for successful signup:
 		"typeOfAccount": "regular/business/admin",
 		"userId": "user id"
 	},
-	"sendLocation": true// or false
+	"sendLocation": true
 }
 ```
+`sendLocation` might be `false`.
 
 Error responses:
 - Username already exists: "Username " + username + " already taken"
@@ -143,7 +146,7 @@ If the user is logged in, it returns a full response:
 	"goodReviews": 0,
 	"badReviews": 0,
 	"avgRating": 0.0,
-	"defects": [], // array of strings
+	"defects": [],
 	"userReviews": {
 		"goodReviews": [
 			{
@@ -151,7 +154,7 @@ If the user is logged in, it returns a full response:
 				"date": "js date",
 				"comment": "comment",
 				"rating": 5,
-				"defects": [], // array of strings, in case of a bad review
+				"defects": [],
 				"location": {
 					"latt": "6.42375",
 					"longt": "-66.58973",
@@ -166,8 +169,8 @@ If the user is logged in, it returns a full response:
 				"userId": "user-id",
 				"date": "js date",
 				"comment": "comment",
-				"rating": 0, // in case of a good review
-				"defects": ["ft-3d-ribbon", "ft-watermark"], // array of strings
+				"rating": 0,
+				"defects": ["ft-3d-ribbon", "ft-watermark"],
 				"location": {
 					"latt": "6.42375",
 					"longt": "-66.58973",
@@ -185,7 +188,7 @@ If the user is logged in, it returns a full response:
 				"date": "js date",
 				"comment": "comment",
 				"rating": 5,
-				"defects": [], // array of strings, in case of a bad review
+				"defects": [],
 				"location": {
 					"latt": "6.42375",
 					"longt": "-66.58973",
@@ -200,8 +203,8 @@ If the user is logged in, it returns a full response:
 				"userId": "user-id",
 				"date": "js date",
 				"comment": "comment",
-				"rating": 0, // in case of a good review
-				"defects": ["ft-3d-ribbon", "ft-watermark"], // array of strings
+				"rating": 0,
+				"defects": ["ft-3d-ribbon", "ft-watermark"],
 				"location": {
 					"latt": "6.42375",
 					"longt": "-66.58973",
@@ -212,7 +215,6 @@ If the user is logged in, it returns a full response:
 			}
 		]
 	},
-	// details are optional
 	"details": {
 		"in": {
 			"date": "js date",
@@ -229,6 +231,9 @@ If the user is logged in, it returns a full response:
 	}
 }
 ```
+
+`defects` is an array of strings, in case of a bad review.
+`rating` is a number between 1 and 5 in case of a good review.
 
 ## Basic response
 
@@ -261,10 +266,9 @@ credentials: include
 	"review": {
 		"date": "js date",
 		"comment": "comment",
-		"rating": 0, // in case of a good review: a number between 1 and 5
-		"defects": [], // array of strings, in case of a bad review
+		"rating": 0,
+		"defects": [],
 	},
-	// details is optional
 	"details": {
 		"typeOfDetail": "incoming/outgoing",
 		"detailsData": {
@@ -276,6 +280,10 @@ credentials: include
 	}
 }
 ```
+
+`defects` is an array of strings, in case of a bad review.
+`rating` is a number between 1 and 5 in case of a good review.
+`details` is optional
 
 Response for successful post: 200 OK
 
