@@ -198,6 +198,7 @@ type basicReview struct {
 	BillInfo datastore.BillInfo `json:"billInfo"`
 	GoodReviews int `json:"goodReviews"`
 	BadReviews  int `json:"badReviews"`
+	Defects     []string `json:"defects"`
 	AvgRating   float32 `json:"avgRating"`
 }
 
@@ -229,6 +230,7 @@ func (r routes) handleGetReview(c *fiber.Ctx) error {
 			BillInfo:    billInfo,
 			GoodReviews: good,
 			BadReviews:  bad,
+			Defects:     reviews.Defects,
 			AvgRating:   reviews.AvgRating,
 		})
 	}
